@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>2026 Borç Dashboard</title>
+<style>
+:root{--bg:#0f172a;--panel:#111827;--line:#334155;--text:#f8fafc;--muted:#94a3b8;--accent:#38bdf8;--good:#34d399;--danger:#fb7185}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#0f172a,#111827);color:var(--text);min-height:100vh}
+.wrap{max-width:1450px;margin:auto;padding:18px}h1{margin:0 0 6px}.subtitle{color:var(--muted);margin-bottom:18px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}button{border:0;border-radius:10px;padding:11px 15px;cursor:pointer;font-weight:700;background:var(--accent);color:#082f49}
+button.secondary{background:#334155;color:white}button.danger{background:var(--danger);color:#4c0519}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+.card,.section{background:rgba(17,24,39,.92);border:1px solid var(--line);border-radius:16px}.card{padding:16px}.label{color:var(--muted);font-size:13px}.value{font-size:25px;font-weight:800;margin-top:7px}
+.section{margin-bottom:18px;overflow:hidden}.section h2{margin:0;padding:15px 16px;background:#182235;font-size:19px}.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:1000px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}th{color:#cbd5e1;font-size:13px;background:#111827}
+td.bank{font-weight:700;min-width:150px}input{width:100%;min-width:90px;background:#0b1220;color:white;border:1px solid #475569;border-radius:8px;padding:9px}
+.money{text-align:right;white-space:nowrap}.kmh{color:#fda4af;font-weight:700}.carddebt{color:#fde68a;font-weight:700}.footnote{color:var(--muted);font-size:12px;padding:12px 16px 16px}.status{color:var(--good);font-size:13px}
+
+.charts-grid{display:grid;grid-template-columns:repeat(2,minmax(320px,1fr));gap:16px;margin-bottom:18px}
+.chart-card{background:rgba(17,24,39,.92);border:1px solid var(--line);border-radius:16px;padding:16px;min-height:340px}
+.chart-card.wide{grid-column:1/-1}
+.chart-title{font-size:17px;font-weight:800;margin-bottom:4px}
+.chart-subtitle{font-size:12px;color:var(--muted);margin-bottom:14px}
+.chart-box{width:100%;height:320px;position:relative}
+.chart-box canvas{width:100%;height:100%;display:block}
+.chart-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;color:#cbd5e1;font-size:12px}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+
+@media(max-width:850px){.cards{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}.chart-card.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>2026 Borç Dashboard</h1>
+<div class="subtitle">KMH, kredi kartı, krediler ve yaşamsal giderler</div>
+<div class="toolbar">
+<button onclick="saveLocal()">Kaydet</button>
+<button class="secondary" onclick="downloadJSON()">JSON Yedeği İndir</button>
+<button class="secondary" onclick="document.getElementById('importFile').click()">JSON Yükle</button>
+<input id="importFile" type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
+<button class="danger" onclick="resetData()">Sıfırla</button><span id="status" class="status"></span>
+</div>
+<div class="cards">
+<div class="card"><div class="label">Toplam KMH Kullanımı</div><div id="sumKmh" class="value">0,00 ₺</div></div>
+<div class="card"><div class="label">Toplam Aylık Faiz Gideri</div><div id="sumKmhInterest" class="value">0,00 ₺</div></div>
+<div class="card"><div class="label">Kredi Kartı Kullanımı</div><div id="sumCard" class="value">0,00 ₺</div></div>
+<div class="card"><div class="label">Toplam Aylık Taksit</div><div id="sumInstallment" class="value">0,00 ₺</div></div>
+<div class="card"><div class="label">Aylık Gider</div><div id="sumMonthly" class="value">0,00 ₺</div></div>
+</div>
+
+
+
+
+<div class="section"><h2>Bankalar</h2><div class="table-wrap"><table>
+<thead><tr><th rowspan="2">Banka</th><th colspan="5">KMH</th><th colspan="5">Kredi Kartı</th></tr>
+<tr><th>Limit</th><th>Kullanım</th><th>Aylık Faiz %</th><th>Aylık Faiz</th><th>Not</th><th>Limit</th><th>Kullanım</th><th>Aylık Faiz %</th><th>Aylık Faiz</th><th>Not</th></tr></thead>
+<tbody id="bankRows"></tbody></table></div>
+<div class="footnote">Faiz hesabı: kullanım × aylık faiz oranı / 100. Yaşamsal giderler kredi kartı kullanımına yalnızca kullanılabilir toplam kart limiti kadar eklenir; toplam kredi kartı limiti aşılamaz.</div></div>
+
+<div class="section"><h2 style="display:flex;justify-content:space-between;align-items:center"><span>Krediler</span><button onclick="addCredit()">+ Kredi Ekle</button></h2>
+<div class="table-wrap"><table style="min-width:850px"><thead><tr><th>Öncelik</th><th>Kredi</th><th>Aylık Taksit</th><th>Ödenen / Toplam Taksit</th><th>Kalan Vade</th><th>Sıradaki Taksit Tarihi</th><th>Tahmini Son Ödeme Tarihi</th><th>Not</th><th></th></tr></thead><tbody id="creditRows"></tbody></table></div><div class="footnote">Tahmini son ödeme tarihi, “Sıradaki Taksit Tarihi” üzerine kalan vade kadar ay eklenerek hesaplanır.</div></div>
+
+<div class="section"><h2>Yaşamsal Giderler</h2><div class="table-wrap"><table style="min-width:650px">
+<thead><tr><th>Gider</th><th>Aylık Tutar</th><th>Not</th></tr></thead><tbody id="expenseRows"></tbody></table></div></div>
+
+<div class="section"><h2>Analiz ve Grafikler</h2></div>
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-title">Toplam Borç Dağılımı</div>
+    <div class="chart-subtitle">KMH, kredi kartı ve kalan kredi taksit toplamı</div>
+    <div class="chart-box"><canvas id="totalDebtPieChart"></canvas></div>
+    <div id="totalDebtPieLegend" class="chart-legend"></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Aylık Borç Gideri Dağılımı</div>
+    <div class="chart-subtitle">Aylık kredi taksitleri ile KMH ve kredi kartı faiz giderleri</div>
+    <div class="chart-box"><canvas id="monthlyDebtPieChart"></canvas></div>
+    <div id="monthlyDebtPieLegend" class="chart-legend"></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Banka Bazlı Toplam Borç</div>
+    <div class="chart-subtitle">KMH ve kredi kartı kullanımının bankalara göre toplamı</div>
+    <div class="chart-box"><canvas id="bankDebtChart"></canvas></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">KMH Limit Kullanım Oranı</div>
+    <div class="chart-subtitle">Her bankada kullanılan KMH limit yüzdesi</div>
+    <div class="chart-box"><canvas id="kmhUtilChart"></canvas></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Kredi Kartı Limit Kullanım Oranı</div>
+    <div class="chart-subtitle">Her bankada kullanılan kredi kartı limit yüzdesi</div>
+    <div class="chart-box"><canvas id="cardUtilChart"></canvas></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Banka Bazlı Aylık Faiz Gideri</div>
+    <div class="chart-subtitle">KMH ve kredi kartı faizlerinin bankalara göre dağılımı</div>
+    <div class="chart-box"><canvas id="interestChart"></canvas></div>
+  </div>
+
+  <div class="chart-card wide">
+    <div class="chart-title">Kredi Öncelik Sıralaması</div>
+    <div class="chart-subtitle">Kalan taksit sayısı az olandan çoğa doğru sıralama</div>
+    <div class="chart-box"><canvas id="installmentChart"></canvas></div>
+  </div>
+</div>
+</div>
+
+<script>
+const BANKS=["Ziraat Bankası", "İş Bankası", "DenizBank", "Akbank", "Yapı Kredi Bankası", "Finanscell", "Burgan Bank", "QNB Finansbank"];
+const EXPENSES=["Kira", "Yemek", "Market", "Konfeksiyon", "Eğlence / Sosyallik", "Telefon Faturası"];
+const INITIAL_DATA={"inputs": {"b_0_0_limit": "100000", "b_0_0_usage": "100000", "b_0_0_rate": "4.5", "b_0_0_note": "", "b_0_1_limit": "70000", "b_0_1_usage": "70000", "b_0_1_rate": "4", "b_0_1_note": "", "b_1_0_limit": "89500", "b_1_0_usage": "89500", "b_1_0_rate": "4.5", "b_1_0_note": "", "b_1_1_limit": "", "b_1_1_usage": "", "b_1_1_rate": "4", "b_1_1_note": "", "b_2_0_limit": "10000", "b_2_0_usage": "10000", "b_2_0_rate": "4.5", "b_2_0_note": "", "b_2_1_limit": "", "b_2_1_usage": "", "b_2_1_rate": "4", "b_2_1_note": "", "b_3_0_limit": "", "b_3_0_usage": "", "b_3_0_rate": "4.5", "b_3_0_note": "", "b_3_1_limit": "8000", "b_3_1_usage": "8000", "b_3_1_rate": "4", "b_3_1_note": "", "b_4_0_limit": "", "b_4_0_usage": "", "b_4_0_rate": "4.5", "b_4_0_note": "", "b_4_1_limit": "13000", "b_4_1_usage": "13000", "b_4_1_rate": "4", "b_4_1_note": "", "b_5_0_limit": "", "b_5_0_usage": "", "b_5_0_rate": "4.5", "b_5_0_note": "", "b_5_1_limit": "", "b_5_1_usage": "", "b_5_1_rate": "4", "b_5_1_note": "", "b_6_0_limit": "", "b_6_0_usage": "", "b_6_0_rate": "4.5", "b_6_0_note": "", "b_6_1_limit": "", "b_6_1_usage": "", "b_6_1_rate": "4", "b_6_1_note": "", "b_7_0_limit": "", "b_7_0_usage": "", "b_7_0_rate": "4.5", "b_7_0_note": "", "b_7_1_limit": "56112", "b_7_1_usage": "56112", "b_7_1_rate": "4", "b_7_1_note": "", "e_0_amount": "18000", "e_0_note": "", "e_1_amount": "3000", "e_1_note": "", "e_2_amount": "12000", "e_2_note": "", "e_3_amount": "2000", "e_3_note": "", "e_4_amount": "500", "e_4_note": "", "e_5_amount": "5500", "e_5_note": ""}, "credits": [{"name": "Ziraat kredi1", "monthly": 31240, "paid": 11, "total": 12, "due": "2026-08-15", "note": ""}, {"name": "Ziraat kredi2", "monthly": 12589, "paid": 1, "total": 12, "due": "2026-09-15", "note": ""}, {"name": "Ziraat Kredi 3", "monthly": 29457, "paid": 4, "total": 6, "due": "2026-08-10", "note": ""}, {"name": "İşbank Kredi 1", "monthly": 3177, "paid": 20, "total": 36, "due": "2026-08-23", "note": ""}, {"name": "İşbank Kredi 2", "monthly": 9687, "paid": 14, "total": 60, "due": "2026-08-23", "note": ""}, {"name": "İşbank Kredi 3", "monthly": 4615, "paid": 18, "total": 22, "due": "2026-08-23", "note": ""}, {"name": "İşbank Kredi 4", "monthly": 4985, "paid": 12, "total": 36, "due": "2026-08-23", "note": ""}, {"name": "Finanscell kredi", "monthly": 4700, "paid": 2, "total": 12, "due": "2026-08-23", "note": ""}, {"name": "Denizbank Kredi ", "monthly": 1450, "paid": 12, "total": 36, "due": "2026-08-23", "note": ""}, {"name": "QNBbank kredi", "monthly": 400, "paid": 23, "total": 35, "due": "2026-08-23", "note": ""}]};
+let state=JSON.parse(JSON.stringify(INITIAL_DATA));
+const num=v=>{const n=parseFloat(String(v??"").replace(",","."));return Number.isFinite(n)?n:0};
+const fmt=v=>new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2}).format(num(v))+" ₺";
+function ensureState(){if(!state.inputs)state.inputs={};if(!Array.isArray(state.credits))state.credits=[]}
+function field(key,value,type="number"){const step=type==="number"?'step="0.01" inputmode="decimal"':"";return `<input type="${type}" ${step} value="${value??""}" data-key="${key}" oninput="updateInput(this)">`}
+
+function addMonthsSafe(dateStr,months){
+  if(!dateStr)return "";
+  const parts=dateStr.split("-").map(Number);
+  if(parts.length!==3||parts.some(n=>!Number.isFinite(n)))return "";
+  const [y,m,d]=parts;
+  const target=new Date(y,m-1,1);
+  target.setMonth(target.getMonth()+months);
+  const lastDay=new Date(target.getFullYear(),target.getMonth()+1,0).getDate();
+  target.setDate(Math.min(d,lastDay));
+  const yy=target.getFullYear();
+  const mm=String(target.getMonth()+1).padStart(2,"0");
+  const dd=String(target.getDate()).padStart(2,"0");
+  return `${yy}-${mm}-${dd}`;
+}
+function formatDateTR(dateStr){
+  if(!dateStr)return "Tarih girilmedi";
+  const [y,m,d]=dateStr.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+function render(){
+ensureState();
+bankRows.innerHTML=BANKS.map((b,i)=>{let ku=num(state.inputs[`b_${i}_0_usage`]),kr=num(state.inputs[`b_${i}_0_rate`]),cu=num(state.inputs[`b_${i}_1_usage`]),cr=num(state.inputs[`b_${i}_1_rate`]);return `<tr><td class="bank">${b}</td>
+<td>${field(`b_${i}_0_limit`,state.inputs[`b_${i}_0_limit`])}</td><td>${field(`b_${i}_0_usage`,state.inputs[`b_${i}_0_usage`])}</td><td>${field(`b_${i}_0_rate`,state.inputs[`b_${i}_0_rate`])}</td><td class="money kmh">${fmt(ku*kr/100)}</td><td>${field(`b_${i}_0_note`,state.inputs[`b_${i}_0_note`],"text")}</td>
+<td>${field(`b_${i}_1_limit`,state.inputs[`b_${i}_1_limit`])}</td><td>${field(`b_${i}_1_usage`,state.inputs[`b_${i}_1_usage`])}</td><td>${field(`b_${i}_1_rate`,state.inputs[`b_${i}_1_rate`])}</td><td class="money carddebt">${fmt(cu*cr/100)}</td><td>${field(`b_${i}_1_note`,state.inputs[`b_${i}_1_note`],"text")}</td></tr>`}).join("");
+const sortedCredits=state.credits.map((c,i)=>({c,i,remaining:Math.max(num(c.total)-num(c.paid),0)})).sort((a,b)=>a.remaining-b.remaining||num(b.c.monthly)-num(a.c.monthly));
+creditRows.innerHTML=sortedCredits.map((x,rank)=>{const c=x.c,i=x.i;const finalDate=x.remaining>0?addMonthsSafe(c.due,x.remaining):c.due;return `<tr><td><strong>${rank+1}</strong></td><td><input value="${c.name??""}" oninput="updateCredit(${i},'name',this.value)"></td><td><input type="number" step="0.01" value="${c.monthly??0}" oninput="updateCredit(${i},'monthly',this.value)"></td><td style="display:flex;gap:6px;align-items:center"><input type="number" value="${c.paid??0}" oninput="updateCredit(${i},'paid',this.value)"><span>/</span><input type="number" value="${c.total??1}" oninput="updateCredit(${i},'total',this.value)"></td><td><strong>${x.remaining} ay</strong></td><td><input type="date" value="${c.due??""}" oninput="updateCredit(${i},'due',this.value)"></td><td><strong>${formatDateTR(finalDate)}</strong></td><td><input value="${c.note??""}" oninput="updateCredit(${i},'note',this.value)"></td><td><button class="danger" onclick="removeCredit(${i})">Sil</button></td></tr>`}).join("");
+expenseRows.innerHTML=EXPENSES.map((e,i)=>`<tr><td class="bank">${e}</td><td>${field(`e_${i}_amount`,state.inputs[`e_${i}_amount`])}</td><td>${field(`e_${i}_note`,state.inputs[`e_${i}_note`],"text")}</td></tr>`).join("");
+updateTotals();
+}
+function updateInput(el){state.inputs[el.dataset.key]=el.value;render();autoSave()}
+function updateCredit(i,k,v){state.credits[i][k]=["monthly","paid","total"].includes(k)?num(v):v;updateTotals();autoSave()}
+function addCredit(){state.credits.push({name:`Kredi ${state.credits.length+1}`,monthly:0,paid:0,total:12,due:"",note:""});render();autoSave()}
+function removeCredit(i){state.credits.splice(i,1);render();autoSave()}
+
+function setupCanvas(canvas){
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.getBoundingClientRect();
+  canvas.width=Math.max(1,Math.floor(rect.width*dpr));
+  canvas.height=Math.max(1,Math.floor(rect.height*dpr));
+  const ctx=canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w:rect.width,h:rect.height};
+}
+function niceMax(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v)));return Math.ceil(v/p)*p}
+
+
+function drawBarChart(canvas,labels,series){
+  const {ctx,w,h}=setupCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  const left=Math.min(180,Math.max(110,w*.28));
+  const pad={l:left,r:28,t:22,b:34},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const isPercent=series.some(s=>s.percent);
+  const rawMax=Math.max(...series.flatMap(s=>s.values),1);
+  const max=isPercent?100:niceMax(rawMax);
+  const rowH=ch/Math.max(labels.length,1);
+  const barH=Math.min(18,(rowH-8)/Math.max(series.length,1));
+
+  ctx.font="11px Arial";
+  for(let i=0;i<=5;i++){
+    const value=max*i/5;
+    const x=pad.l+cw*i/5;
+    ctx.strokeStyle="#334155";
+    ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,h-pad.b);ctx.stroke();
+    ctx.fillStyle="#94a3b8";ctx.textAlign="center";
+    ctx.fillText(isPercent?Math.round(value)+"%":new Intl.NumberFormat("tr-TR",{notation:"compact",maximumFractionDigits:1}).format(value),x,h-10);
+  }
+
+  labels.forEach((lab,i)=>{
+    const gy=pad.t+i*rowH+rowH/2;
+    ctx.fillStyle="#e2e8f0";
+    ctx.textAlign="right";
+    ctx.font="11px Arial";
+    const maxChars=w<600?20:28;
+    const shown=lab.length>maxChars?lab.slice(0,maxChars-1)+"…":lab;
+    ctx.fillText(shown,pad.l-10,gy+4);
+
+    series.forEach((s,j)=>{
+      const val=s.values[i]||0;
+      const bw=cw*(Math.min(val,max)/max);
+      const y=gy-(series.length*barH)/2+j*barH;
+
+      ctx.fillStyle=s.color;
+      ctx.beginPath();
+      ctx.roundRect(pad.l,y,bw,Math.max(barH-3,4),6);
+      ctx.fill();
+
+      if(val>0){
+        ctx.fillStyle="#f8fafc";
+        ctx.font="700 10px Arial";
+        ctx.textAlign="left";
+        const label=isPercent?Math.round(val)+"%":new Intl.NumberFormat("tr-TR",{notation:"compact",maximumFractionDigits:1}).format(val);
+        ctx.fillText(label,Math.min(pad.l+bw+6,w-42),y+barH-4);
+      }
+    });
+  });
+}
+
+
+
+
+
+function drawDebtPie(canvas,items,legendEl,centerLabel){
+  const {ctx,w,h}=setupCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+  const total=items.reduce((s,x)=>s+x.value,0)||1;
+  const cx=w/2,cy=h/2-4,r=Math.min(w,h)*.32,inner=r*.56;
+  let start=-Math.PI/2;
+  items.forEach(it=>{
+    const angle=(it.value/total)*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,start,start+angle);
+    ctx.arc(cx,cy,inner,start+angle,start,true);
+    ctx.closePath();
+    ctx.fillStyle=it.color;
+    ctx.fill();
+    start+=angle;
+  });
+  ctx.fillStyle="#f8fafc";
+  ctx.textAlign="center";
+  ctx.font="700 21px Arial";
+  ctx.fillText(fmt(total),cx,cy-2);
+  ctx.fillStyle="#94a3b8";
+  ctx.font="12px Arial";
+  ctx.fillText(centerLabel,cx,cy+18);
+  legendEl.innerHTML=items.map(it=>`<span class="legend-item"><span class="legend-dot" style="background:${it.color}"></span>${it.name}: ${fmt(it.value)}</span>`).join("");
+}
+
+
+function renderCharts(){
+  if(!document.getElementById("bankDebtChart"))return;
+
+  const kmh=[], cards=[], kmhUtil=[], cardUtil=[], interests=[];
+  BANKS.forEach((_,i)=>{
+    const kl=num(state.inputs[`b_${i}_0_limit`]);
+    const ku=num(state.inputs[`b_${i}_0_usage`]);
+    const kr=num(state.inputs[`b_${i}_0_rate`]);
+    const cl=num(state.inputs[`b_${i}_1_limit`]);
+    const cu=num(state.inputs[`b_${i}_1_usage`]);
+    const cr=num(state.inputs[`b_${i}_1_rate`]);
+
+    kmh.push(ku);
+    cards.push(cu);
+    kmhUtil.push(kl>0 ? Math.min((ku/kl)*100,100) : 0);
+    cardUtil.push(cl>0 ? Math.min((cu/cl)*100,100) : 0);
+    interests.push((ku*kr/100)+(cu*cr/100));
+  });
+
+  const monthlyInstallments=state.credits.reduce((sum,c)=>sum+num(c.monthly),0);
+  const remainingInstallments=state.credits.reduce((sum,c)=>{
+    const remaining=Math.max(num(c.total)-num(c.paid),0);
+    return sum+(num(c.monthly)*remaining);
+  },0);
+  const totalKmh=kmh.reduce((a,b)=>a+b,0);
+  const totalCards=cards.reduce((a,b)=>a+b,0);
+
+  let monthlyKmhInterest=0,monthlyCardInterest=0;
+  BANKS.forEach((_,i)=>{
+    monthlyKmhInterest+=num(state.inputs[`b_${i}_0_usage`])*num(state.inputs[`b_${i}_0_rate`])/100;
+    monthlyCardInterest+=num(state.inputs[`b_${i}_1_usage`])*num(state.inputs[`b_${i}_1_rate`])/100;
+  });
+
+  drawDebtPie(totalDebtPieChart,[
+    {name:"KMH",value:totalKmh,color:"#fb7185"},
+    {name:"Kredi kartı",value:totalCards,color:"#fbbf24"},
+    {name:"Kalan kredi taksit toplamı",value:remainingInstallments,color:"#38bdf8"}
+  ],totalDebtPieLegend,"Toplam borç");
+
+  drawDebtPie(monthlyDebtPieChart,[
+    {name:"Aylık kredi taksitleri",value:monthlyInstallments,color:"#38bdf8"},
+    {name:"KMH faiz gideri",value:monthlyKmhInterest,color:"#fb7185"},
+    {name:"Kredi kartı faiz gideri",value:monthlyCardInterest,color:"#fbbf24"}
+  ],monthlyDebtPieLegend,"Aylık borç gideri");
+
+  drawBarChart(bankDebtChart,BANKS,[
+    {values:kmh,color:"#fb7185"},
+    {values:cards,color:"#fbbf24"}
+  ]);
+
+  drawBarChart(kmhUtilChart,BANKS,[{values:kmhUtil,color:"#38bdf8",percent:true}]);
+  drawBarChart(cardUtilChart,BANKS,[{values:cardUtil,color:"#34d399",percent:true}]);
+  drawBarChart(interestChart,BANKS,[{values:interests,color:"#a78bfa"}]);
+
+  const ordered=state.credits.map(c=>({
+    name:c.name||"Kredi",
+    monthly:num(c.monthly),
+    remaining:Math.max(num(c.total)-num(c.paid),0)
+  })).sort((a,b)=>a.remaining-b.remaining||b.monthly-a.monthly);
+
+  drawBarChart(
+    installmentChart,
+    ordered.map((c,i)=>`${i+1}. ${c.name} — ${c.remaining} ay`),
+    [{values:ordered.map(c=>c.monthly),color:"#38bdf8"}]
+  );
+}
+
+
+
+function updateTotals(){let kmh=0,ki=0,card=0,ci=0,exp=0,cred=0,weightedCardRate=0,totalCardLimit=0;BANKS.forEach((_,i)=>{let ku=num(state.inputs[`b_${i}_0_usage`]),kr=num(state.inputs[`b_${i}_0_rate`]),cl=num(state.inputs[`b_${i}_1_limit`]),cu=num(state.inputs[`b_${i}_1_usage`]),cr=num(state.inputs[`b_${i}_1_rate`]);kmh+=ku;ki+=ku*kr/100;totalCardLimit+=cl;card+=cu;ci+=cu*cr/100;if(cu>0)weightedCardRate+=cu*cr});EXPENSES.forEach((_,i)=>exp+=num(state.inputs[`e_${i}_amount`]));state.credits.forEach(c=>cred+=num(c.monthly));let avgCardRate=card>0?weightedCardRate/card:4;let availableCardLimit=Math.max(totalCardLimit-card,0);let expensesChargedToCard=Math.min(exp,availableCardLimit);let cardWithExpenses=Math.min(card+expensesChargedToCard,totalCardLimit);let totalInterest=ki+ci+(expensesChargedToCard*avgCardRate/100);sumKmh.textContent=fmt(kmh);sumKmhInterest.textContent=fmt(totalInterest);sumCard.textContent=fmt(cardWithExpenses);sumInstallment.textContent=fmt(cred);sumMonthly.textContent=fmt(exp);renderCharts()}
+let t;function autoSave(){clearTimeout(t);t=setTimeout(()=>{localStorage.setItem("borcDashboard2026_v2",JSON.stringify(state));showStatus("Otomatik kaydedildi")},300)}
+function saveLocal(){localStorage.setItem("borcDashboard2026_v2",JSON.stringify(state));showStatus("Kaydedildi")}
+function showStatus(m){status.textContent=m;setTimeout(()=>status.textContent="",1500)}
+function downloadJSON(){const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="borc-dashboard-yedek.json";a.click()}
+function importJSON(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{state=JSON.parse(r.result);render();saveLocal()}catch(e){alert("Geçersiz JSON")}};r.readAsText(f)}
+function resetData(){if(confirm("İlk verilere dönülsün mü?")){state=JSON.parse(JSON.stringify(INITIAL_DATA));localStorage.removeItem("borcDashboard2026_v2");render()}}
+try{const s=localStorage.getItem("borcDashboard2026_v2");if(s)state=JSON.parse(s)}catch(e){}
+render();window.addEventListener("resize",()=>{clearTimeout(window.__chartResize);window.__chartResize=setTimeout(renderCharts,120)});
+</script>
+</body></html>
