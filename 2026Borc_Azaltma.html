@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2026 Detaylı Borç Azaltma Raporu ve Yol Haritası</title>
+<style>
+:root{--bg:#07111e;--panel:#101d30;--panel2:#152640;--line:#29405f;--text:#edf5ff;--muted:#9cafc8;--blue:#4f8cff;--green:#2dd4bf;--orange:#fb923c;--red:#fb7185;--purple:#a78bfa}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#06101d,#0a1728 55%,#111f35);font-family:Inter,Arial,sans-serif;color:var(--text)}
+.wrap{max-width:1500px;margin:auto;padding:24px}h1{font-size:31px;margin:0}.subtitle{color:var(--muted);margin-top:8px;line-height:1.55}
+.badges{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}.badge{padding:8px 12px;border-radius:999px;background:#15325f;color:#cfe1ff;font-weight:800;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:18px}.card,.panel{background:rgba(16,29,48,.96);border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 38px rgba(0,0,0,.22)}
+.card{padding:17px}.label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:800}.value{font-size:26px;font-weight:900;margin-top:8px}.small{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.45}
+.panel{padding:18px;margin-top:16px}h2{font-size:19px;margin:0 0 13px}.alert{border-left:5px solid var(--orange);padding:15px;background:#172942;border-radius:12px;line-height:1.6}
+.charts{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}canvas{width:100%;height:340px;display:block}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:1150px}th{background:#19304f;padding:11px 9px;font-size:12px;color:#dbeafe;position:sticky;top:0}td{padding:10px 9px;border-bottom:1px solid #263b57;text-align:right;font-size:13px;white-space:nowrap}td:first-child,th:first-child{text-align:left}tr:nth-child(even) td{background:rgba(255,255,255,.018)}.good{color:#5eead4;font-weight:800}.warn{color:#fdba74;font-weight:800}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}.roadmap{margin:0;padding-left:21px;line-height:1.75;color:#dce8f7}.roadmap b{color:white}.milestones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.milestone{background:#14243b;border:1px solid #2a405e;border-radius:14px;padding:14px}.milestone-date{font-size:12px;color:#93c5fd;font-weight:900;text-transform:uppercase}.milestone-title{font-weight:900;margin-top:6px}.milestone-text{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.45}
+.progress{height:13px;background:#243850;border-radius:999px;overflow:hidden;margin-top:12px}.fill{height:100%;width:45.6%;background:linear-gradient(90deg,#2dd4bf,#4f8cff)}.meta{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:7px}.foot{font-size:12px;color:var(--muted);line-height:1.55;margin-top:15px}
+@media(max-width:1050px){.grid{grid-template-columns:repeat(2,1fr)}.charts,.two{grid-template-columns:1fr}.milestones{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.wrap{padding:12px}.grid{grid-template-columns:1fr}.milestones{grid-template-columns:1fr}h1{font-size:24px}}
+@media print{body{background:white;color:#111}.card,.panel{background:white;color:#111;box-shadow:none;border-color:#bbb}.subtitle,.small,.label,.foot,.meta{color:#555}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>2026 Detaylı Borç Azaltma Raporu ve Yol Haritası</h1>
+<div class="subtitle">Kaynaklar: işaretlenen borç dashboard’u ile 2026 gelir dashboard’u. Ağustos–Aralık nakit akışı, kredi kapanışları, serbest kalan taksitler ve borçsuz kalma tarihi birlikte modellenmiştir.</div>
+<div class="badges">
+<span class="badge">Yaşamsal gider kart ödemesinin içinde — çift sayım yok</span>
+<span class="badge">Gelir varsayımı: Ocak–Temmuz ortalaması</span>
+<span class="badge">KMH aylık %4,5 · Kart aylık %4</span>
+</div>
+
+<div class="grid">
+<div class="card"><div class="label">Aylık ortalama gelir</div><div class="value">169.893,78 TL</div><div class="small">Gelir dashboard’undaki 7 gerçekleşen ay</div></div>
+<div class="card"><div class="label">Başlangıç toplam ödeme yükü</div><div class="value">1.296.379,00 TL</div><div class="small">KMH + kart + kalan taksit toplamı</div></div>
+<div class="card"><div class="label">2026 sonu tahmini yük</div><div class="value">705.663,55 TL</div><div class="small">Dönen borçlar + kalan planlı taksitler</div></div>
+<div class="card"><div class="label">Tüm borçların sözleşmesel bitişi</div><div class="value">Mayıs 2030</div><div class="small">Erken kredi kapaması yapılmazsa en uzun kredi</div></div>
+</div>
+
+<div class="panel">
+<div class="alert"><b>En önemli ayrım:</b> KMH ve kredi kartı borcu nakit fazlasıyla hızla azaltılabilir. Ancak taksitli kredilerin dosyada yalnızca aylık taksit ve kalan vadesi var; erken kapama bakiyesi yok. Bu nedenle kesin borçsuzluk tarihi, krediler normal takviminde ödenirse <b>23 Mayıs 2030</b> olur. Erken kapama yapılacaksa bankalardan güncel kapama tutarı alınarak bu tarih öne çekilebilir.</div>
+</div>
+
+<div class="charts">
+<div class="panel"><h2>Ağustos–Aralık Borç Azalışı</h2><canvas id="debtChart" width="900" height="340"></canvas></div>
+<div class="panel"><h2>Sözleşmesel Aylık Taksit Yükü</h2><canvas id="timelineChart" width="720" height="340"></canvas></div>
+</div>
+
+<div class="panel">
+<h2>5 Aylık Ayrıntılı Nakit Akışı</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Ay</th><th>Gelir</th><th>Kart İçindeki Yaşamsal Gider</th><th>Zorunlu Taksit</th><th>KMH Faizi</th><th>Kart Faizi</th><th>KMH Anapara</th><th>Kart Anapara</th><th>Ay Sonu KMH</th><th>Ay Sonu Kart</th></tr></thead>
+<tbody>
+    <tr>
+      <td><b>Ağustos</b></td><td>169.893,78 TL</td><td>41.000,00 TL</td>
+      <td>89.711,00 TL</td><td>8.977,50 TL</td>
+      <td>5.884,48 TL</td><td class="good">24.320,80 TL</td>
+      <td class="good">0,00 TL</td><td>175.179,20 TL</td>
+      <td>147.112,00 TL</td>
+    </tr>
+    <tr>
+      <td><b>Eylül</b></td><td>169.893,78 TL</td><td>41.000,00 TL</td>
+      <td>71.060,00 TL</td><td>7.883,06 TL</td>
+      <td>5.884,48 TL</td><td class="good">44.066,24 TL</td>
+      <td class="good">0,00 TL</td><td>131.112,96 TL</td>
+      <td>147.112,00 TL</td>
+    </tr>
+    <tr>
+      <td><b>Ekim</b></td><td>169.893,78 TL</td><td>41.000,00 TL</td>
+      <td>41.603,00 TL</td><td>5.900,08 TL</td>
+      <td>5.884,48 TL</td><td class="good">75.506,22 TL</td>
+      <td class="good">0,00 TL</td><td>55.606,74 TL</td>
+      <td>147.112,00 TL</td>
+    </tr>
+    <tr>
+      <td><b>Kasım</b></td><td>169.893,78 TL</td><td>41.000,00 TL</td>
+      <td>41.603,00 TL</td><td>2.502,30 TL</td>
+      <td>5.884,48 TL</td><td class="good">55.606,74 TL</td>
+      <td class="good">23.297,26 TL</td><td>0,00 TL</td>
+      <td>123.814,74 TL</td>
+    </tr>
+    <tr>
+      <td><b>Aralık</b></td><td>169.893,78 TL</td><td>41.000,00 TL</td>
+      <td>36.988,00 TL</td><td>0,00 TL</td>
+      <td>4.952,59 TL</td><td class="good">0,00 TL</td>
+      <td class="good">86.953,19 TL</td><td>0,00 TL</td>
+      <td>36.861,55 TL</td>
+    </tr></tbody>
+</table></div>
+<div class="foot">41.000 TL yaşamsal gider, kartla yapılan aylık yeni harcama kabul edilerek yalnızca bir kez düşülmüştür. Kart borcuna ikinci kez eklenmemiştir.</div>
+</div>
+
+<div class="two">
+<div class="panel">
+<h2>2026 Sonu Sonuç</h2>
+<div class="value">590.715,45 TL azalma</div>
+<div class="progress"><div class="fill"></div></div>
+<div class="meta"><span>Başlangıç 1.296.379,00 TL</span><span>%45.6 azalma</span></div>
+<ul class="roadmap">
+<li><b>Kasım 2026:</b> KMH tamamen kapanır.</li>
+<li><b>Aralık 2026:</b> Kartın eski bakiyesi yaklaşık <b>36.861,55 TL</b> kalır.</li>
+<li><b>Ocak 2027:</b> Aynı gelir ve harcama düzeninde kartın kalan eski bakiyesi kapanabilir.</li>
+<li>Sonrasında nakit fazlası erken kredi kapamaya veya güvenlik rezervine ayrılabilir.</li>
+</ul>
+</div>
+<div class="panel">
+<h2>Uygulanacak Ödeme Sırası</h2>
+<ol class="roadmap">
+<li>Kredi taksitlerini vadesinde ve eksiksiz öde.</li>
+<li>Kartla yapılan 41.000 TL aylık yaşamsal harcamayı aynı ay tam karşıla.</li>
+<li>Kalan bütçeyi aylık %4,5 maliyetli KMH’ye aktar.</li>
+<li>KMH sıfırlanınca bütün fazlayı aylık %4 kart borcuna aktar.</li>
+<li>Kart bittikten sonra bankalardan erken kapama tutarı al; en yüksek maliyetli krediyi kapat.</li>
+<li>Kapanan her kredinin taksidini bir sonraki hedef borca ekleyerek borç kartopu uygula.</li>
+</ol>
+</div>
+</div>
+
+<div class="panel">
+<h2>Kredi Kapanışları ve Serbest Kalacak Taksitler</h2>
+<div class="milestones">
+    <div class="milestone">
+      <div class="milestone-date">Ağustos 2026</div>
+      <div class="milestone-title">Ziraat kredi1</div>
+      <div class="milestone-text">Aylık 31.240,00 TL taksit yükü sona erer.</div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-date">Eylül 2026</div>
+      <div class="milestone-title">Ziraat Kredi 3</div>
+      <div class="milestone-text">Aylık 29.457,00 TL taksit yükü sona erer.</div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-date">Kasım 2026</div>
+      <div class="milestone-title">İşbank Kredi 3</div>
+      <div class="milestone-text">Aylık 4.615,00 TL taksit yükü sona erer.</div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-date">Mayıs 2027</div>
+      <div class="milestone-title">Finanscell kredi</div>
+      <div class="milestone-text">Aylık 4.700,00 TL taksit yükü sona erer.</div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-date">Temmuz 2027</div>
+      <div class="milestone-title">Ziraat kredi2, QNBbank kredi</div>
+      <div class="milestone-text">Aylık 12.989,00 TL taksit yükü sona erer.</div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-date">Kasım 2027</div>
+      <div class="milestone-title">İşbank Kredi 1</div>
+      <div class="milestone-text">Aylık 3.177,00 TL taksit yükü sona erer.</div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-date">Temmuz 2028</div>
+      <div class="milestone-title">İşbank Kredi 4, Denizbank Kredi</div>
+      <div class="milestone-text">Aylık 6.435,00 TL taksit yükü sona erer.</div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-date">Mayıs 2030</div>
+      <div class="milestone-title">İşbank Kredi 2</div>
+      <div class="milestone-text">Aylık 9.687,00 TL taksit yükü sona erer.</div>
+    </div></div>
+</div>
+
+<div class="panel">
+<h2>Tüm Kredilerin Ayrıntılı Takvimi</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Kredi</th><th>Aylık Taksit</th><th>Kalan Vade</th><th>Sıradaki Taksit</th><th>Gerçek Son Taksit Tarihi</th><th>Kalan Planlı Ödeme</th></tr></thead>
+<tbody>
+    <tr>
+      <td>Ziraat kredi1</td><td>31.240,00 TL</td><td>1 ay</td>
+      <td>15.08.2026</td><td>15.08.2026</td>
+      <td>31.240,00 TL</td>
+    </tr>
+    <tr>
+      <td>Ziraat Kredi 3</td><td>29.457,00 TL</td><td>2 ay</td>
+      <td>10.08.2026</td><td>10.09.2026</td>
+      <td>58.914,00 TL</td>
+    </tr>
+    <tr>
+      <td>İşbank Kredi 3</td><td>4.615,00 TL</td><td>4 ay</td>
+      <td>23.08.2026</td><td>23.11.2026</td>
+      <td>18.460,00 TL</td>
+    </tr>
+    <tr>
+      <td>Finanscell kredi</td><td>4.700,00 TL</td><td>10 ay</td>
+      <td>23.08.2026</td><td>23.05.2027</td>
+      <td>47.000,00 TL</td>
+    </tr>
+    <tr>
+      <td>Ziraat kredi2</td><td>12.589,00 TL</td><td>11 ay</td>
+      <td>15.09.2026</td><td>15.07.2027</td>
+      <td>138.479,00 TL</td>
+    </tr>
+    <tr>
+      <td>QNBbank kredi</td><td>400,00 TL</td><td>12 ay</td>
+      <td>23.08.2026</td><td>23.07.2027</td>
+      <td>4.800,00 TL</td>
+    </tr>
+    <tr>
+      <td>İşbank Kredi 1</td><td>3.177,00 TL</td><td>16 ay</td>
+      <td>23.08.2026</td><td>23.11.2027</td>
+      <td>50.832,00 TL</td>
+    </tr>
+    <tr>
+      <td>İşbank Kredi 4</td><td>4.985,00 TL</td><td>24 ay</td>
+      <td>23.08.2026</td><td>23.07.2028</td>
+      <td>119.640,00 TL</td>
+    </tr>
+    <tr>
+      <td>Denizbank Kredi</td><td>1.450,00 TL</td><td>24 ay</td>
+      <td>23.08.2026</td><td>23.07.2028</td>
+      <td>34.800,00 TL</td>
+    </tr>
+    <tr>
+      <td>İşbank Kredi 2</td><td>9.687,00 TL</td><td>46 ay</td>
+      <td>23.08.2026</td><td>23.05.2030</td>
+      <td>445.602,00 TL</td>
+    </tr></tbody>
+</table></div>
+<div class="foot">“Gerçek son taksit tarihi”, sıradaki ödeme ilk kalan taksit kabul edilerek kalan vade − 1 ay eklenerek hesaplandı. Kaynak dashboard’un ekranda gösterdiği tarih formülü bir ay daha ileri tarih üretiyor; raporda nakit akışı açısından fiilen yapılacak son ödeme tarihi kullanıldı.</div>
+</div>
+
+<div class="panel">
+<h2>Net Yol Haritası</h2>
+<ol class="roadmap">
+<li><b>Ağustos:</b> 89.711 TL kredi taksiti nedeniyle en sıkışık ay. Yaklaşık 24.321 TL KMH anaparası azaltılır.</li>
+<li><b>Eylül:</b> Ziraat kredi1 biter; Ziraat kredi3 son ödemesini yapar. KMH’ye yaklaşık 44.066 TL aktarılır.</li>
+<li><b>Ekim:</b> Aylık taksit yükü 41.603 TL’ye iner. KMH yaklaşık 75.506 TL azalır.</li>
+<li><b>Kasım:</b> KMH tamamen kapanır; kalan yaklaşık 23.297 TL kart anaparasına geçer.</li>
+<li><b>Aralık:</b> İşbank Kredi 3 kapanmış olur ve taksit yükü 36.988 TL’ye düşer. Karta yaklaşık 86.953 TL anapara ödenir.</li>
+<li><b>Ocak 2027:</b> Kartın kalan yaklaşık 36.862 TL eski bakiyesi ve faizi kapatılır; bundan sonraki fazlalık erken kredi kapama fonuna ayrılır.</li>
+<li><b>2027–2030:</b> Erken kapama yapılmazsa krediler sırasıyla kapanır; son kredi İşbank Kredi 2 olup son taksiti 23 Mayıs 2030’dur.</li>
+</ol>
+</div>
+
+<div class="foot"><b>Varsayımlar ve sınırlar:</b> Ağustos–Aralık gelirleri 169.893,78 TL sabit kabul edildi. Yeni borç, nakit avans, gecikme ve ek kart harcaması yoktur. KMH ve kart faizleri kaynak dosyadaki oranlarla aylık basit yaklaşım üzerinden hesaplandı. BSMV/KKDF, günlük faiz, hesap kesim tarihi ve kredi erken kapama indirimleri kaynak dosyada bulunmadığı için modele dahil edilmedi.</div>
+</div>
+
+<script>
+const report={"five": [{"label": "Ağustos", "income": 169893.7814285714, "living": 41000.0, "installment": 89711.0, "kmh_interest": 8977.5, "card_interest": 5884.4800000000005, "pay_kmh": 24320.801428571413, "pay_card": 0.0, "kmh_end": 175179.1985714286, "card_end": 147112.0, "free_cash": 0.0, "credits": ["Ziraat kredi1", "Ziraat Kredi 3", "İşbank Kredi 1", "İşbank Kredi 2", "İşbank Kredi 3", "İşbank Kredi 4", "Finanscell kredi", "Denizbank Kredi", "QNBbank kredi"]}, {"label": "Eylül", "income": 169893.7814285714, "living": 41000.0, "installment": 71060.0, "kmh_interest": 7883.063935714286, "card_interest": 5884.4800000000005, "pay_kmh": 44066.23749285712, "pay_card": 0.0, "kmh_end": 131112.96107857148, "card_end": 147112.0, "free_cash": 0.0, "credits": ["Ziraat kredi2", "Ziraat Kredi 3", "İşbank Kredi 1", "İşbank Kredi 2", "İşbank Kredi 3", "İşbank Kredi 4", "Finanscell kredi", "Denizbank Kredi", "QNBbank kredi"]}, {"label": "Ekim", "income": 169893.7814285714, "living": 41000.0, "installment": 41603.0, "kmh_interest": 5900.083248535716, "card_interest": 5884.4800000000005, "pay_kmh": 75506.2181800357, "pay_card": 0.0, "kmh_end": 55606.74289853577, "card_end": 147112.0, "free_cash": 0.0, "credits": ["Ziraat kredi2", "İşbank Kredi 1", "İşbank Kredi 2", "İşbank Kredi 3", "İşbank Kredi 4", "Finanscell kredi", "Denizbank Kredi", "QNBbank kredi"]}, {"label": "Kasım", "income": 169893.7814285714, "living": 41000.0, "installment": 41603.0, "kmh_interest": 2502.3034304341095, "card_interest": 5884.4800000000005, "pay_kmh": 55606.74289853577, "pay_card": 23297.255099601534, "kmh_end": 0.0, "card_end": 123814.74490039847, "free_cash": 0.0, "credits": ["Ziraat kredi2", "İşbank Kredi 1", "İşbank Kredi 2", "İşbank Kredi 3", "İşbank Kredi 4", "Finanscell kredi", "Denizbank Kredi", "QNBbank kredi"]}, {"label": "Aralık", "income": 169893.7814285714, "living": 41000.0, "installment": 36988.0, "kmh_interest": 0.0, "card_interest": 4952.589796015939, "pay_kmh": 0.0, "pay_card": 86953.19163255548, "kmh_end": 0.0, "card_end": 36861.55326784299, "free_cash": 0.0, "credits": ["Ziraat kredi2", "İşbank Kredi 1", "İşbank Kredi 2", "İşbank Kredi 4", "Finanscell kredi", "Denizbank Kredi", "QNBbank kredi"]}], "timelineLabels": ["Ağu 26", "Eyl 26", "Eki 26", "Kas 26", "Ara 26", "Oca 27", "Şub 27", "Mar 27", "Nis 27", "May 27", "Haz 27", "Tem 27", "Ağu 27", "Eyl 27", "Eki 27", "Kas 27", "Ara 27", "Oca 28", "Şub 28", "Mar 28", "Nis 28", "May 28", "Haz 28", "Tem 28", "Ağu 28", "Eyl 28", "Eki 28", "Kas 28", "Ara 28", "Oca 29", "Şub 29", "Mar 29", "Nis 29", "May 29", "Haz 29", "Tem 29", "Ağu 29", "Eyl 29", "Eki 29", "Kas 29", "Ara 29", "Oca 30", "Şub 30", "Mar 30", "Nis 30", "May 30"], "timelineValues": [89711.0, 71060.0, 41603.0, 41603.0, 36988.0, 36988.0, 36988.0, 36988.0, 36988.0, 36988.0, 32288.0, 32288.0, 19299.0, 19299.0, 19299.0, 19299.0, 16122.0, 16122.0, 16122.0, 16122.0, 16122.0, 16122.0, 16122.0, 16122.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0, 9687.0], "opening": 1296379.0, "yearEnd": 705663.553267843};
+const fmt=n=>new Intl.NumberFormat("tr-TR",{notation:"compact",maximumFractionDigits:1}).format(n);
+function setup(id){const c=document.getElementById(id),x=c.getContext("2d");x.clearRect(0,0,c.width,c.height);return [c,x]}
+function drawDebt(){
+ const [c,x]=setup("debtChart");
+ const vals=[report.opening,...report.five.map((r,i)=>report.opening-report.five.slice(0,i+1).reduce((s,z)=>s+z.installment+z.pay_kmh+z.pay_card,0))];
+ const labs=["Başlangıç",...report.five.map(r=>r.label.slice(0,3))];
+ const L=70,R=25,T=25,B=48,w=c.width-L-R,h=c.height-T-B,max=Math.max(...vals)*1.04,min=Math.min(...vals)*.94;
+ x.font="12px Arial";x.strokeStyle="#2a405e";x.fillStyle="#9cafc8";
+ for(let j=0;j<=4;j++){const y=T+j*h/4,v=max-(max-min)*j/4;x.beginPath();x.moveTo(L,y);x.lineTo(c.width-R,y);x.stroke();x.fillText(fmt(v),10,y+4)}
+ const step=w/(vals.length-1);x.beginPath();
+ vals.forEach((v,i)=>{const px=L+i*step,py=T+(max-v)/(max-min)*h;i?x.lineTo(px,py):x.moveTo(px,py)});
+ x.strokeStyle="#4f8cff";x.lineWidth=4;x.stroke();
+ vals.forEach((v,i)=>{const px=L+i*step,py=T+(max-v)/(max-min)*h;x.beginPath();x.arc(px,py,6,0,Math.PI*2);x.fillStyle="#2dd4bf";x.fill();x.fillStyle="#dbeafe";x.textAlign="center";x.fillText(labs[i],px,T+h+24);x.fillText(fmt(v),px,py-12)});x.textAlign="left";
+}
+function drawTimeline(){
+ const [c,x]=setup("timelineChart");const vals=report.timelineValues,labs=report.timelineLabels,max=Math.max(...vals)*1.08;
+ const L=55,R=20,T=25,B=55,w=c.width-L-R,h=c.height-T-B,step=w/vals.length,bar=Math.max(3,step*.72);
+ x.font="11px Arial";x.strokeStyle="#2a405e";x.fillStyle="#9cafc8";
+ for(let j=0;j<=4;j++){let y=T+h-j*h/4;x.beginPath();x.moveTo(L,y);x.lineTo(c.width-R,y);x.stroke();x.fillText(fmt(max*j/4),6,y+4)}
+ vals.forEach((v,i)=>{let bh=v/max*h,px=L+i*step+(step-bar)/2,py=T+h-bh;x.fillStyle="#a78bfa";x.fillRect(px,py,bar,bh);if(i%4===0||i===vals.length-1){x.save();x.translate(px+bar/2,T+h+10);x.rotate(-Math.PI/3);x.fillStyle="#dbeafe";x.fillText(labs[i],0,0);x.restore()}});
+}
+drawDebt();drawTimeline();
+</script>
+</body>
+</html>
